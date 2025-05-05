@@ -232,5 +232,38 @@ vector<array<int, 2>> encrypt(string message, int keymatrix[16][16]) {
 	return encryptedMessage;
  }
 int main(int argc, const char* argv[]) {
-    
+    string messege = readFile(argv[3]);
+	vector<char> key(argv[2], argv[2] + strlen(argv[2]));
+	vector<char> file(argv[3], argv[3] + strlen(argv[3]));
+		int keyMatrix [16][16];
+	createKeyMatrix(keyMatrix, key);
+	//printKeyMatrix(keyMatrix);
+
+	if (argv[1][0] == 'b') {
+		cout << "both" << endl;
+		vector<array<int, 2>> encryptedMessage = encrypt(messege, keyMatrix);
+		//writeEncryptedToFileAscii(encryptedMessage, "encrypted.txt");
+		writeEncryptedToFile(encryptedMessage, "encrypted.txt");
+		string messege2 = readFile("encrypted.txt");
+		string decryptedMessage = decrypt(messege2, keyMatrix);
+		writeDecryptedToFile(decryptedMessage, "decrypted.txt");
+	}
+	else if (argv[1][0] == 'd') {
+		cout << "Decrypting..." << endl;
+		convertToAsciiString(messege);
+		string decryptedMessage = decrypt(messege, keyMatrix);
+		writeDecryptedToFile(decryptedMessage, "decrypted.txt");
+
+	}
+	else if (argv[1][0] == 'e') {
+		cout << "Encrypting..." << endl;
+		vector<array<int, 2>> encryptedMessage = encrypt(messege, keyMatrix);
+		//writeEncryptedToFile(encryptedMessage, "encrypted.txt");
+		writeEncryptedToFileAscii(encryptedMessage, "encrypted.txt");
+	}
+	else {
+		cout << "Invalid argument. Use 'd' for decrypt or 'e' for encrypt." << std::endl;
+		return 1;
+	}
+	return 0;
 }
