@@ -8,6 +8,38 @@
 #include <sstream>
 using namespace std;
 
+void printKeyMatrix(int keyMatrix[16][16]) {
+	ofstream outFile("keymatrix.txt");
+	if (outFile.is_open()) {
+		for (int i = 0; i < 16; i++) {
+			for (int j = 0; j < 16; j++) {
+				outFile << std::setw(3) << keyMatrix[i][j] << " ";
+			}
+			outFile << endl;
+		}
+		outFile.close();
+	}
+	else {
+		cerr << "Failed to open file for writing." << endl;
+	}
+}
+void printencryptedMessage(const vector<array<int, 2>>& encryptedMessage, string state) {
+	cout << "" << state << endl;
+	for (const auto& pair : encryptedMessage) {
+		cout << pair[0] << " " << pair[1] << " ";
+	}
+	cout << endl;
+}
+string readFile(const char s[]) {
+	ifstream input(s, ios::in | ios::binary);
+	if (!input.is_open()) {
+		return "";
+	}
+
+	string content((istreambuf_iterator<char>(input)), istreambuf_iterator<char>());
+	input.close();
+	return content;
+}
 vector<char> removeDuplicateChar(vector<char>& key) {
 	unordered_set<char> seen;
 	vector<char> uniqueChars;
@@ -76,6 +108,76 @@ void writeEncryptedToFileAscii(const vector<array<int, 2>>& encryptedMessage, co
 	}
 
 	outputFile.close();
+}
+void writeEncryptedToFile(const vector<array<int, 2>>& encryptedMessage, const string& filename) {
+	ofstream outputFile(filename);
+
+	if (!outputFile.is_open()) {
+		cerr << "Error opening file!" << endl;
+		return;
+	}
+
+	for (const auto& pair : encryptedMessage) {
+		outputFile << pair[0] << " " << pair[1] << " ";
+	}
+
+	outputFile.close();
+}
+void writeDecryptedToFile(const string& decryptedMessage, const string& filename) {
+	ofstream outputFile(filename);
+	if (!outputFile.is_open()) {
+		cerr << "Error opening file!" << endl;
+		return;
+	}
+	outputFile << decryptedMessage;
+	outputFile.close();
+}
+string decrypt(string messege, int keymatrix[16][16]) {
+	vector<array<int, 2>> encryptedMessage;
+	vector<array<int, 2>> decryptedMessage;
+	vector<int> numbers;
+	stringstream ss(messege);
+	string token;
+	printKeyMatrix(keymatrix);
+	while (getline(ss, token, ' ')) {
+		numbers.push_back(stoi(token));
+	}
+	for (int i = 0; i < numbers.size() - 1; i += 2) {
+		encryptedMessage.push_back({ numbers[i], numbers[i + 1]});
+	}
+	printencryptedMessage(encryptedMessage, "pred desifriranju");
+	for (const array<int, 2>&a : encryptedMessage) {
+		pair<int, int> first = getCoordinates(keymatrix, a[0]); 
+		pair<int, int> second = getCoordinates(keymatrix, a[1]); 
+
+		if (first.first == second.first) {  
+			int newChar1 = keymatrix[first.first][(first.second - 1) % 16];  
+			int newChar2 = keymatrix[second.first][(second.second - 1) % 16];  
+			decryptedMessage.push_back({ newChar1, newChar2 });
+		}
+		else if (first.second == second.second) {  
+			int newChar1 = keymatrix[(first.first - 1) % 16][first.second];  
+			int newChar2 = keymatrix[(second.first - 1) % 16][second.second];  
+			decryptedMessage.push_back({ newChar1, newChar2 });
+		}
+		else {  
+			int newChar1 = keymatrix[first.first][second.second];  
+			int newChar2 = keymatrix[second.first][first.second];  
+			decryptedMessage.push_back({ newChar1, newChar2 });
+		}
+	}
+	printencryptedMessage(decryptedMessage, "po desifriranju");
+	string decryptedText = "";
+	for (const array<int, 2>&a : decryptedMessage) {
+		for (int i = 0; i < 2; i++) {
+			int charValue = a[i];
+			if (charValue == 0) continue; 
+			if (charValue == 3) break; 
+			decryptedText += static_cast<char>(charValue);
+		}
+	}
+
+	return decryptedText;
 }
 vector<array<int, 2>> encrypt(string message, int keymatrix[16][16]) {
 	vector<array<int, 2>> procMessage; 
